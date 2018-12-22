@@ -1,0 +1,18 @@
+{
+    "name": "esquery-lint-server",
+    "description": "Language server for esquery-lint in node.",
+    "version": "1.0.0",
+    "author": "Ben Corman",
+    "license": "MIT",
+    "engines": {
+        "node": "*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/bcorman/esquery-lint-vscode.git"
+    },
+    "dependencies": {
+        "vscode-languageserver": "^4.1.3"
+    },
+    "scripts": {}
+}
