@@ -1,0 +1,24 @@
+{
+  "name": "esquery-lint-client",
+  "description": "vscode portion of esquery-lint",
+  "author": "Ben Corman",
+  "license": "MIT",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcorman/esquery-lint-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "scripts": {
+    "update-vscode": "vscode-install",
+    "postinstall": "vscode-install"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^4.1.4"
+  },
+  "devDependencies": {
+    "vscode": "^1.1.21"
+  }
+}
