@@ -1,0 +1,60 @@
+{
+  "name": "esquery-lint",
+  "version": "1.0.0",
+  "description": "Linting and query validation for esQuery in VS Code",
+  "main": "./client/out/extension",
+  "scripts": {
+    "vscode:prepublish": "cd client && npm run update-vscode && cd .. && npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "test": "sh ./scripts/e2e.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcorman/esquery-lint-vscode.git"
+  },
+  "author": "Ben Corman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bcorman/esquery-lint-vscode/issues"
+  },
+  "homepage": "https://github.com/bcorman/esquery-lint-vscode#readme",
+  "engines": {
+    "vscode": "^1.23.0"
+  },
+  "activationEvents": [
+    "onLanguage:plaintext"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Example configuration",
+      "properties": {
+        "languageServerExample.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 100,
+          "description": "Controls the maximum number of problems produced by the server."
+        },
+        "languageServerExample.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/mocha": "^5.2.0",
+    "@types/node": "^8.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.3"
+  }
+}
