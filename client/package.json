@@ -9,7 +9,7 @@
     "url": "git+https://github.com/bcorman/esquery-lint-vscode.git"
   },
   "engines": {
-    "vscode": "^1.23.0"
+    "vscode": "^1.26.0"
   },
   "scripts": {
     "update-vscode": "vscode-install",
