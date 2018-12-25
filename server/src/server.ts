@@ -19,6 +19,8 @@ import {
     TextDocumentPositionParams
 } from 'vscode-languageserver';
 
+import * as esprima from 'esprima';
+
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 let connection = createConnection(ProposedFeatures.all);
