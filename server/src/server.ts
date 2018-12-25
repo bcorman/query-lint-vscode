@@ -16,15 +16,16 @@ import {
     DidChangeConfigurationNotification,
     CompletionItem,
     CompletionItemKind,
-    TextDocumentPositionParams
+    TextDocumentPositionParams,
+    Range
 } from 'vscode-languageserver';
-
 import * as esprima from 'esprima';
+console.log('activated')
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 let connection = createConnection(ProposedFeatures.all);
-
+connection.console.log('activated');
 // Create a simple text document manager. The text document manager
 // supports full document sync only
 let documents: TextDocuments = new TextDocuments();
@@ -129,13 +130,68 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // In this simple example we get the settings for every validate run.
     let settings = await getDocumentSettings(textDocument.uri);
 
-    // The validator creates diagnostics for all uppercase words length 2 and more
-    let text = textDocument.getText();
-    let pattern = /\b[A-Z]{2,}\b/g;
-    let m: RegExpExecArray | null;
 
-    let problems = 0;
-    let diagnostics: Diagnostic[] = [];
+    // Define a block to parse
+    let text = textDocument.getText();
+
+    let activation: String | RegExp = /parse/;
+    let deactivation: String | RegExp = /endparse/;
+    let start: RegExpExecArray | null
+    
+    let end: RegExpExecArray | null
+    
+    
+    connection.console.log(text)
+    
+    
+    // let blockRange: Range = {
+        //     start: textDocument.positionAt(start.index),
+        //     end: textDocument.positionAt(end.index)
+        // }
+        
+        // let codeBlock = textDocument.getText(blockRange);
+        
+        // Parse code in code block
+        // console.log(codeBlock)
+        
+        // The validator creates diagnostics for all uppercase words length 2 and more
+        // let text = textDocument.getText();
+        let pattern = /\b[A-Z]{2,}\b/g;
+        let m: RegExpExecArray | null;
+        
+        let problems = 0;
+        let diagnostics: Diagnostic[] = [];
+    while (((start = activation.exec(text)) && (end = deactivation.exec(text))) && problems < settings.maxNumberOfProblems) {
+        problems++
+        let diagnosic: Diagnostic = {
+            severity: DiagnosticSeverity.Information,
+            range: {
+                start: textDocument.positionAt(start.index),
+                end: textDocument.positionAt(end.index)
+            },
+            message: `Found the parser block`,
+            source: 'ex'
+        };
+        if (hasDiagnosticRelatedInformationCapability) {
+            diagnosic.relatedInformation = [
+                {
+                    location: {
+                        uri: textDocument.uri,
+                        range: Object.assign({}, diagnosic.range)
+                    },
+                    message: 'custom message'
+                },
+                {
+                    location: {
+                        uri: textDocument.uri,
+                        range: Object.assign({}, diagnosic.range)
+                    },
+                    message: 'custom message 2'
+                }
+            ];
+        }
+        diagnostics.push(diagnosic);
+    }
     while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
         problems++;
         let diagnosic: Diagnostic = {
