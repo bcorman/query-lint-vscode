@@ -134,16 +134,30 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // Define a block to parse
     let text = textDocument.getText();
 
-    let activation: String | RegExp = /parse/;
-    let deactivation: String | RegExp = /endparse/;
+    let activation: String | RegExp = /\/\/\sparse/;
+    let deactivation: String | RegExp = /\/\/\sendparse/;
     let start: RegExpExecArray | null
-    
-    let end: RegExpExecArray | null
-    
-    
-    connection.console.log(text)
-    
-    
+    let end: RegExpExecArray | null    
+    let codeBlockRange: Range;
+    let codeBlock: string;
+
+    if ((start = activation.exec(text)) && (end = deactivation.exec(text))) {
+        codeBlockRange = {
+            start: textDocument.positionAt(start.index + start[0].length + 1),
+            end: textDocument.positionAt(end.index)
+        }
+        codeBlock = textDocument.getText(codeBlockRange);
+        connection.console.log(codeBlock)
+    }
+
+    if (codeBlock) {
+        try {
+            let parse = esprima.parseScript(codeBlock);
+            connection.console.log(JSON.stringify(parse));
+        } catch (e) {
+            connection.console.error(JSON.stringify(e));
+        }
+    }
     // let blockRange: Range = {
         //     start: textDocument.positionAt(start.index),
         //     end: textDocument.positionAt(end.index)
@@ -161,12 +175,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
         
         let problems = 0;
         let diagnostics: Diagnostic[] = [];
-    while (((start = activation.exec(text)) && (end = deactivation.exec(text))) && problems < settings.maxNumberOfProblems) {
+    if (((start = activation.exec(text)) && (end = deactivation.exec(text))) && problems < settings.maxNumberOfProblems) {
         problems++
         let diagnosic: Diagnostic = {
             severity: DiagnosticSeverity.Information,
             range: {
-                start: textDocument.positionAt(start.index),
+                start: textDocument.positionAt(start.index + start[0].length + 1),
                 end: textDocument.positionAt(end.index)
             },
             message: `Found the parser block`,
