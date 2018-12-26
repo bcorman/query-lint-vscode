@@ -17,7 +17,8 @@ import {
     CompletionItem,
     CompletionItemKind,
     TextDocumentPositionParams,
-    Range
+    Range,
+    Hover
 } from 'vscode-languageserver';
 import * as esprima from 'esprima';
 console.log('activated')
@@ -48,6 +49,7 @@ connection.onInitialize((params: InitializeParams) => {
 
     return {
         capabilities: {
+            hoverProvider: true,
             textDocumentSync: documents.syncKind,
             // Tell the client that the server supports code completion
             completionProvider: {
