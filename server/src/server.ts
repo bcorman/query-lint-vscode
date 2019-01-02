@@ -21,6 +21,7 @@ import {
     Hover
 } from 'vscode-languageserver';
 import * as esprima from 'esprima';
+import * as esquery from 'esquery';
 console.log('activated')
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
@@ -154,8 +155,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
     if (codeBlock) {
         try {
-            let parse = esprima.parseScript(codeBlock);
-            connection.console.log(JSON.stringify(parse));
+            let parse = esprima.parseModule(codeBlock);
+            connection.console.log(JSON.stringify(parse, null, 2));
         } catch (e) {
             connection.console.error(JSON.stringify(e));
         }
