@@ -155,7 +155,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     if (codeBlock) {
         try {
             let parse = esprima.parseScript(codeBlock);
-            connection.console.log(JSON.stringify(parse));
+            connection.console.log(JSON.stringify(parse, null, 2));
         } catch (e) {
             connection.console.error(JSON.stringify(e));
         }
