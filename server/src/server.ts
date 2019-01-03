@@ -134,7 +134,7 @@ async function evaluateQueries(textDocument: TextDocument): Promise<void> {
     let settings = await getDocumentSettings(textDocument.uri);
 
     let text = textDocument.getText();
-    
+
     // Define a code block to parse
     let activation: String | RegExp = /\/\* *CODE/g;
     let deactivation: String | RegExp = /CODE *\*\//g;
@@ -177,8 +177,8 @@ async function evaluateQueries(textDocument: TextDocument): Promise<void> {
                 start: textDocument.positionAt(m.index),
                 end: textDocument.positionAt(m.index + 13 + m[1].length)
             },
-            message: JSON.stringify(!!results.length, null, 2),
-            source: 'ex'
+            message: JSON.stringify(results, null, 2),
+            source: JSON.stringify(!!results.length, null, 2)
         };
         if (hasDiagnosticRelatedInformationCapability) {
             diagnosic.relatedInformation = [
@@ -187,7 +187,7 @@ async function evaluateQueries(textDocument: TextDocument): Promise<void> {
                         uri: textDocument.uri,
                         range: Object.assign({}, diagnosic.range)
                     },
-                    message: JSON.stringify(results, null, 2)
+                    message: `${results.length} match${results.length === 1 ? '' : 'es'}`
                 }
             ];
         }
