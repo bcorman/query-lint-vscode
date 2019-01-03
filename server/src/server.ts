@@ -100,7 +100,7 @@ connection.onDidChangeConfiguration(change => {
     }
 
     // Revalidate all open text documents
-    documents.all().forEach(validateTextDocument);
+    documents.all().forEach(evaluateQueries);
 });
 
 function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
@@ -126,98 +126,58 @@ documents.onDidClose(e => {
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
-    validateTextDocument(change.document);
+    evaluateQueries(change.document);
 });
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+async function evaluateQueries(textDocument: TextDocument): Promise<void> {
     // In this simple example we get the settings for every validate run.
     let settings = await getDocumentSettings(textDocument.uri);
 
-
-    // Define a block to parse
     let text = textDocument.getText();
-
-    let activation: String | RegExp = /\/\/\sparse/;
-    let deactivation: String | RegExp = /\/\/\sendparse/;
+    
+    // Define a code block to parse
+    let activation: String | RegExp = /\/\* *CODE/g;
+    let deactivation: String | RegExp = /CODE *\*\//g;
     let start: RegExpExecArray | null
-    let end: RegExpExecArray | null    
+    let end: RegExpExecArray | null
     let codeBlockRange: Range;
     let codeBlock: string;
+    let ast;
 
-    if ((start = activation.exec(text)) && (end = deactivation.exec(text))) {
+    if (((start = activation.exec(text)) && (end = deactivation.exec(text)))) {
+
         codeBlockRange = {
             start: textDocument.positionAt(start.index + start[0].length + 1),
             end: textDocument.positionAt(end.index)
         }
         codeBlock = textDocument.getText(codeBlockRange);
-        connection.console.log(codeBlock)
-    }
 
-    if (codeBlock) {
         try {
-            let parse = esprima.parseModule(codeBlock);
-            connection.console.log(JSON.stringify(parse, null, 2));
+            ast = esprima.parseModule(codeBlock);
+            //connection.console.log(JSON.stringify(ast, null, 2));
         } catch (e) {
             connection.console.error(JSON.stringify(e));
         }
+
     }
-    // let blockRange: Range = {
-        //     start: textDocument.positionAt(start.index),
-        //     end: textDocument.positionAt(end.index)
-        // }
-        
-        // let codeBlock = textDocument.getText(blockRange);
-        
-        // Parse code in code block
-        // console.log(codeBlock)
-        
-        // The validator creates diagnostics for all uppercase words length 2 and more
-        // let text = textDocument.getText();
-        let pattern = /\b[A-Z]{2,}\b/g;
-        let m: RegExpExecArray | null;
-        
-        let problems = 0;
-        let diagnostics: Diagnostic[] = [];
-    if (((start = activation.exec(text)) && (end = deactivation.exec(text))) && problems < settings.maxNumberOfProblems) {
-        problems++
+
+    // The validator creates diagnostics for all ifEsquery Calls
+    let pattern = /ifEsquery\(.(.*).\)/g;
+    let m: RegExpExecArray | null;
+
+    let problems = 0;
+    let diagnostics: Diagnostic[] = [];
+    while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
+        problems++;
+        let results = esquery.match(ast, esquery.parse(m[1]));
+
         let diagnosic: Diagnostic = {
             severity: DiagnosticSeverity.Information,
             range: {
-                start: textDocument.positionAt(start.index + start[0].length + 1),
-                end: textDocument.positionAt(end.index)
-            },
-            message: `Found the parser block`,
-            source: 'ex'
-        };
-        if (hasDiagnosticRelatedInformationCapability) {
-            diagnosic.relatedInformation = [
-                {
-                    location: {
-                        uri: textDocument.uri,
-                        range: Object.assign({}, diagnosic.range)
-                    },
-                    message: 'custom message'
-                },
-                {
-                    location: {
-                        uri: textDocument.uri,
-                        range: Object.assign({}, diagnosic.range)
-                    },
-                    message: 'custom message 2'
-                }
-            ];
-        }
-        diagnostics.push(diagnosic);
-    }
-    while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-        problems++;
-        let diagnosic: Diagnostic = {
-            severity: DiagnosticSeverity.Warning,
-            range: {
                 start: textDocument.positionAt(m.index),
-                end: textDocument.positionAt(m.index + m[0].length)
+                end: textDocument.positionAt(m.index + 13 + m[1].length)
             },
-            message: `${m[0]} is all uppercase.`,
+            message: JSON.stringify(!!results.length, null, 2),
             source: 'ex'
         };
         if (hasDiagnosticRelatedInformationCapability) {
@@ -227,14 +187,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
                         uri: textDocument.uri,
                         range: Object.assign({}, diagnosic.range)
                     },
-                    message: 'Spelling matters'
-                },
-                {
-                    location: {
-                        uri: textDocument.uri,
-                        range: Object.assign({}, diagnosic.range)
-                    },
-                    message: 'Particularly for names'
+                    message: JSON.stringify(results, null, 2)
                 }
             ];
         }
@@ -244,6 +197,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     // Send the computed diagnostics to VSCode.
     connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
+
 
 connection.onDidChangeWatchedFiles(_change => {
     // Monitored files have change in VSCode
@@ -288,21 +242,21 @@ connection.onCompletionResolve(
 
 /*
 connection.onDidOpenTextDocument((params) => {
-	// A text document got opened in VSCode.
-	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
-	// params.text the initial full content of the document.
-	connection.console.log(`${params.textDocument.uri} opened.`);
+    // A text document got opened in VSCode.
+    // params.uri uniquely identifies the document. For documents store on disk this is a file URI.
+    // params.text the initial full content of the document.
+    connection.console.log(`${params.textDocument.uri} opened.`);
 });
 connection.onDidChangeTextDocument((params) => {
-	// The content of a text document did change in VSCode.
-	// params.uri uniquely identifies the document.
-	// params.contentChanges describe the content changes to the document.
-	connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
+    // The content of a text document did change in VSCode.
+    // params.uri uniquely identifies the document.
+    // params.contentChanges describe the content changes to the document.
+    connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
 });
 connection.onDidCloseTextDocument((params) => {
-	// A text document got closed in VSCode.
-	// params.uri uniquely identifies the document.
-	connection.console.log(`${params.textDocument.uri} closed.`);
+    // A text document got closed in VSCode.
+    // params.uri uniquely identifies the document.
+    connection.console.log(`${params.textDocument.uri} closed.`);
 });
 */
 
